@@ -143,6 +143,8 @@ void dbg_debugprint1(char *format,...) {}
 void dbg_debugprint2(char *format,...) {}
 void dbg_debugprint3(char *format,...) {}
 void dbg_debugprint4(char *format,...) {}
+void dbg_debugprint5(char *format,...) {}
+void dbg_debugprint6(char *format,...) {}
 #else
 void dbg_debugprint1(char *format,...)
 {
@@ -219,6 +221,8 @@ void dbg_debugprint5(char *format,...)
       va_end(va_alist);
     }
 }
+#else
+void dbg_debugprint5(char *format,...) {}
 #endif
 
 #ifdef DBGLEVEL6
@@ -236,6 +240,8 @@ void dbg_debugprint6(char *format,...)
       va_end(va_alist);
     }
 }
+#else
+void dbg_debugprint6(char *format,...) {}
 #endif
 
 #endif /* else of not def DBGLEVEL */
