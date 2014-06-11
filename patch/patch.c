@@ -994,6 +994,7 @@ copy_unknown_element:
 	  l->obfd = output_bfd;
 
 	  *ptr = output_bfd;
+// Joachim: consulting the old and new header files: old_bfd->next = new_bfd->archive_next
 #ifdef PNMPI_NEW_BFD_API
       ptr = &output_bfd->archive_next;
 #else /*PNMPI_NEW_BFD_API*/
