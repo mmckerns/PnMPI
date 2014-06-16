@@ -62,6 +62,9 @@ extern void *MPIR_ToPointer (int idx);
 
 #ifdef COMPILE_FOR_FORTRAN
 void pmpi_init_(int *ierror); 
+#ifdef HAVE_MPI_INIT_THREAD_Fortran
+void pmpi_init_thread_(int *ierror, int* required, int* provided);
+#endif /*HAVE_MPI_INIT_THREAD_Fortran*/
 #endif
 
 static int init_was_fortran = -1;
@@ -274,7 +277,11 @@ static int PNMPI_Common_MPI_Init(int * _pnmpi_arg_0, char * * * _pnmpi_arg_1)
 {
   int returnVal;
 
+    inc_pnmpi_mpi_level();
+#ifndef PNMPI_ENABLE_THREAD_SAFETY
+  // If thread safety active pnmpi will already be initialized
   pnmpi_PreInit();  /* this will never fail */
+#endif
   
   if (NOT_ACTIVATED(MPI_Init_ID))
     {
@@ -295,6 +302,7 @@ static int PNMPI_Common_MPI_Init(int * _pnmpi_arg_0, char * * * _pnmpi_arg_1)
   DBGLATEINIT();
   STATUSINIT();
   DBGPRINT1("Leaving Init");
+    dec_pnmpi_mpi_level();
 
   if (getenv("PNMPI_BE_SILENT") == NULL )
   {
@@ -520,7 +528,8 @@ int NQJ_Init(int * _pnmpi_arg_0, char * * * _pnmpi_arg_1)
   int res;
   int start_level;
   
-  start_level=pnmpi_level;
+  int pnmpi_level = get_pnmpi_level();
+  start_level = pnmpi_level;
   
   if (IS_ACTIVATED(MPI_Init_ID))
     {
@@ -546,11 +555,11 @@ int NQJ_Init(int * _pnmpi_arg_0, char * * * _pnmpi_arg_1)
             if (DBGCHECK(DBGLEVEL6))
                 modules.module[pnmpi_level]->statstiming.MPI_Init+=get_time_ns()-start_timer;
 #endif
-			DBGPRINT3("Done with wrapper in MPI_Init at level %i - reseting to %i",pnmpi_level,start_level);
-	      pnmpi_level=start_level;
-	      return res;
+            DBGPRINT3("Done with wrapper in MPI_Init at level %i - reseting to %i",pnmpi_level,start_level);
+          set_pnmpi_level(start_level);
+          return res;
             }
-          pnmpi_level++;
+          pnmpi_level = inc_pnmpi_level();
        }
     }
 
@@ -571,7 +580,7 @@ int NQJ_Init(int * _pnmpi_arg_0, char * * * _pnmpi_arg_1)
       pnmpi_init_done=1;
     }
   DBGPRINT3("Done with original MPI in MPI_Init");
-  pnmpi_level = start_level;
+  set_pnmpi_level( start_level );
   return res;
 }
 
@@ -584,7 +593,11 @@ static int PNMPI_Common_MPI_Init_thread(int * _pnmpi_arg_0, char * * * _pnmpi_ar
   if (required > PNMPI_MAX_THREADED)
       required = PNMPI_MAX_THREADED;
 
+  inc_pnmpi_mpi_level();
+#ifndef PNMPI_ENABLE_THREAD_SAFETY
+  // If thread safety active pnmpi will already be initialized
   pnmpi_PreInit();  /* this will never fail */
+#endif
   
   if (NOT_ACTIVATED(MPI_Init_thread_ID))
     {
@@ -607,6 +620,7 @@ static int PNMPI_Common_MPI_Init_thread(int * _pnmpi_arg_0, char * * * _pnmpi_ar
   DBGLATEINIT();
   STATUSINIT();
   DBGPRINT1("Leaving Init");
+  ded_pnmpi_mpi_level();
 
   if (getenv("PNMPI_BE_SILENT") == NULL )
   {
@@ -833,6 +847,7 @@ int NQJ_Init_thread(int * _pnmpi_arg_0, char * * * _pnmpi_arg_1, int _required, 
   int res;
   int start_level;
   
+  int pnmpi_level = get_pnmpi_level();
   start_level=pnmpi_level;
   
   if (IS_ACTIVATED(MPI_Init_thread_ID))
@@ -860,10 +875,10 @@ int NQJ_Init_thread(int * _pnmpi_arg_0, char * * * _pnmpi_arg_1, int _required, 
                 modules.module[pnmpi_level]->statstiming.MPI_Init_thread+=get_time_ns()-start_timer;
 #endif
             DBGPRINT3("Done with wrapper in MPI_Init_thread at level %i - reseting to %i",pnmpi_level,start_level);
-          pnmpi_level = start_level;
+          set_pnmpi_level( start_level );
           return res;
             }
-          pnmpi_level++;
+          pnmpi_level = inc_pnmpi_level();
        }
     }
 
@@ -886,7 +901,7 @@ int NQJ_Init_thread(int * _pnmpi_arg_0, char * * * _pnmpi_arg_1, int _required, 
       pnmpi_init_done=1;
     }
   DBGPRINT3("Done with original MPI in MPI_Init_thread");
-  pnmpi_level = start_level;
+  set_pnmpi_level( start_level );
   return res;
 }
 #endif /*HAVE_MPI_INIT_THREAD_C*/
@@ -946,9 +961,12 @@ int MPI_Finalize(void)
 	}
 #endif
 
-  err=MPI_Barrier(MPI_COMM_WORLD);
+  err=PMPI_Barrier(MPI_COMM_WORLD);
 
-	err=PMPI_Finalize();
+    inc_pnmpi_mpi_level();
+	err=PMPI_Finalize();    
+    dec_pnmpi_mpi_level();
+
 	return err;
 }
 
@@ -957,6 +975,7 @@ int NQJ_Finalize(void)
   int res;
   int start_level;
   
+  int pnmpi_level = get_pnmpi_level();
   start_level=pnmpi_level;
   
   if (IS_ACTIVATED(MPI_Finalize_ID))
@@ -984,17 +1003,17 @@ int NQJ_Finalize(void)
 				modules.module[pnmpi_level]->statstiming.MPI_Finalize+=get_time_ns()-start_timer;
 #endif
 			DBGPRINT3("Done with wrapper in MPI_Finalize at level %i - reseting to %i",pnmpi_level,start_level);
-	      pnmpi_level=start_level;
+	      set_pnmpi_level( start_level );
 	      return res;
             }
-          pnmpi_level++;
+          pnmpi_level = inc_pnmpi_level();
        }
     }
 
   DBGPRINT3("Calling a original MPI in MPI_Finalize");
   res=MPI_SUCCESS;
   DBGPRINT3("Done with original MPI in MPI_Finalize");
-  pnmpi_level=start_level;
+  set_pnmpi_level( start_level );
   return res;
 }
 
@@ -1080,10 +1099,10 @@ int MPI_Pcontrol(int level, ... )
 	if ((modules.pcontrol == PNMPI_PCONTROL_INT) ||
 		((modules.pcontrol == PNMPI_PCONTROL_TYPED) && (modules.pcontrol_typed_level != level)))
 	{
-    int curr_pnmpi_level=pnmpi_level;
+    int curr_pnmpi_level=get_pnmpi_level();
 		for (i=0; i<pnmpi_max_level; i++)
 		{
-      pnmpi_level=i; 
+		  set_pnmpi_level(i); 
 			if ((pnmpi_function_ptrs.pnmpi_int_MPI_Pcontrol[i]!=NULL) &&
 				(modules.module[i]->pcontrol))
 			{
@@ -1108,7 +1127,7 @@ int MPI_Pcontrol(int level, ... )
 				if (ret!=MPI_SUCCESS) return ret;
 			}
 		}
-    pnmpi_level=curr_pnmpi_level;
+    set_pnmpi_level(curr_pnmpi_level);
 #ifdef DBGLEVEL6
 		if (DBGCHECK(DBGLEVEL6))
 			pnmpi_totalstats_timing.MPI_Pcontrol=get_time_ns()-start_timer2;
@@ -1145,10 +1164,10 @@ int MPI_Pcontrol(int level, ... )
 		}
 		va_end(va_alist);
 		
-    int curr_pnmpi_level=pnmpi_level;
+    int curr_pnmpi_level=get_pnmpi_level();
 		for (i=0; i<pnmpi_max_level; i++)
 		{
-      pnmpi_level=i;
+                        set_pnmpi_level(i);
 			if ((pnmpi_function_ptrs.pnmpi_int_MPI_Pcontrol[i]!=NULL) &&
 				(modules.module[i]->pcontrol))
 			{
@@ -1188,7 +1207,7 @@ int MPI_Pcontrol(int level, ... )
 				if (ret!=MPI_SUCCESS) return ret;
 			}
 		}
-    pnmpi_level=curr_pnmpi_level;
+                set_pnmpi_level(curr_pnmpi_level);
 #ifdef DBGLEVEL6
 		if (DBGCHECK(DBGLEVEL6))
 			pnmpi_totalstats_timing.MPI_Pcontrol=get_time_ns()-start_timer2;
