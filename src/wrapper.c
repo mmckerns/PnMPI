@@ -620,7 +620,7 @@ static int PNMPI_Common_MPI_Init_thread(int * _pnmpi_arg_0, char * * * _pnmpi_ar
   DBGLATEINIT();
   STATUSINIT();
   DBGPRINT1("Leaving Init");
-  ded_pnmpi_mpi_level();
+  dec_pnmpi_mpi_level();
 
   if (getenv("PNMPI_BE_SILENT") == NULL )
   {
