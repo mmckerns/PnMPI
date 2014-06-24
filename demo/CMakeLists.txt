@@ -22,9 +22,9 @@ configure_file(.pnmpi-conf ${CMAKE_CURRENT_BINARY_DIR}/.pnmpi-conf COPY_ONLY)
 
 # Fortran (if we have it)
 if (CMAKE_Fortran_COMPILER_WORKS)
-  add_executable(fdemo    fdemo.f)
-  add_executable(fdemo-pn fdemo.f)
-  add_executable(fdemo-s1 fdemo.f)
+  add_executable(fdemo    fdemo.f90)
+  add_executable(fdemo-pn fdemo.f90)
+  add_executable(fdemo-s1 fdemo.f90)
 
   target_link_libraries(fdemo                        ${MPI_Fortran_LIBRARIES})
   target_link_libraries(fdemo-pn pnmpif              ${MPI_Fortran_LIBRARIES})
