@@ -36,7 +36,13 @@ Boston, MA 02111-1307 USA
 
 #include <mpi.h>
 
-int MPI_Send(void* buf, int num, MPI_Datatype dtype, int node, 
+#include "pnmpi-config.h"
+
+int MPI_Send(
+#ifdef HAVE_MPI3_CONST_ARGS
+    const
+#endif // HAVE_MPI3_CONST_ARGS
+    void* buf, int num, MPI_Datatype dtype, int node, 
 	     int tag, MPI_Comm comm)
 {
   int res;
