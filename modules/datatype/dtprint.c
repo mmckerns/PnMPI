@@ -102,7 +102,11 @@ int MPI_Init(int *argc, char ***argv)
 /*------------------------------------------------------------*/
 /* Isend */
 
-int MPI_Isend(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm,
+int MPI_Isend(
+#ifdef HAVE_MPI3_CONST_ARGS
+              const 
+#endif // HAVE_MPI3_CONST_ARGS
+              void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm,
 	      MPI_Request *req)
 {
   int done; 
@@ -143,7 +147,11 @@ int MPI_Isend(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MP
 /*------------------------------------------------------------*/
 /* Send */
 
-int MPI_Send(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm)
+int MPI_Send(
+#ifdef HAVE_MPI3_CONST_ARGS
+              const 
+#endif // HAVE_MPI3_CONST_ARGS
+              void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm)
 {
   int done; 
   PNMPIMOD_Datatype_Parameters_t ref;

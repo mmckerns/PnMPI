@@ -318,7 +318,7 @@ void PNMPIMOD_Datatype_getItem(PNMPIMOD_Datatype_Parameters_t *ref,char **buf,MP
 /*.......................................................*/
 /* start a reference iterator */
 
-int PNMPIMOD_Datatype_getReference(void *buf, int count, MPI_Datatype dt, PNMPIMOD_Datatype_Parameters_t *ref)
+int PNMPIMOD_Datatype_getReference( const void *buf, int count, MPI_Datatype dt, PNMPIMOD_Datatype_Parameters_t *ref)
 {
   PNMPIMOD_Datatype_storage_p translated_dt;
 
@@ -465,7 +465,11 @@ int PNMPIMOD_Datatype_getSize(MPI_Datatype dt,int *sz)
 
 #ifdef INCLUDE_WRAPPERS
 
-int MPI_Isend(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm,
+int MPI_Isend(
+#ifdef HAVE_MPI3_CONST_ARGS
+    const 
+#endif // HAVE_MPI3_CONST_ARGS
+    void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm,
 	      MPI_Request *req)
 {
   int done; 
@@ -505,7 +509,11 @@ int MPI_Isend(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MP
 }
 
 
-int MPI_Send(void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm)
+int MPI_Send(
+#ifdef HAVE_MPI3_CONST_ARGS
+    const 
+#endif // HAVE_MPI3_CONST_ARGS
+    void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm)
 {
   int done; 
   PNMPIMOD_Datatype_Parameters_t ref;
