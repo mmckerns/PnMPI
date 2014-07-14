@@ -96,15 +96,14 @@ typedef struct PNMPIMOD_Datatype_storage_d
 /*..........................................................*/
 /* get a reference to a datatype to loop over */
 
-typedef int (*PNMPIMOD_Datatype_getReference_t)(void*, int, MPI_Datatype, PNMPIMOD_Datatype_Parameters_t*);
-int PNMPIMOD_Datatype_getReference(void *buf, int count, MPI_Datatype dt, PNMPIMOD_Datatype_Parameters_t *ref);
+typedef int (*PNMPIMOD_Datatype_getReference_t)(const void*, int, MPI_Datatype, PNMPIMOD_Datatype_Parameters_t*);
+int PNMPIMOD_Datatype_getReference(const void *buf, int count, MPI_Datatype dt, PNMPIMOD_Datatype_Parameters_t *ref);
 
 typedef int (*PNMPIMOD_Datatype_delReference_t)(PNMPIMOD_Datatype_Parameters_t*);
 int PNMPIMOD_Datatype_delReference(PNMPIMOD_Datatype_Parameters_t *ref);
 
 typedef int (*PNMPIMOD_Datatype_getSize_t)(MPI_Datatype,int*);
 int PNMPIMOD_Datatype_getSize(MPI_Datatype,int*);
-
 
 /*------------------------------------------------------------*/
 /* External service routines */
