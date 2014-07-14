@@ -37,6 +37,7 @@ Boston, MA 02111-1307 USA
 #include <mpi.h>
 
 #include "pnmpimod.h"
+#include "pnmpi-config.h"
 
 #define PNMPI_PCONTROL_LEVEL 3
 
