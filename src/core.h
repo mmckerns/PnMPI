@@ -1,33 +1,33 @@
 /*
   Copyright (c) 2008
-  Lawrence Livermore National Security, LLC. 
-  
-  Produced at the Lawrence Livermore National Laboratory. 
+  Lawrence Livermore National Security, LLC.
+
+  Produced at the Lawrence Livermore National Laboratory.
   Written by Martin Schulz, schulzm@llnl.gov.
   LLNL-CODE-402774,
   All rights reserved.
-  
-  This file is part of P^nMPI. 
-  
-  Please also read the file "LICENSE" included in this package for 
+
+  This file is part of P^nMPI.
+
+  Please also read the file "LICENSE" included in this package for
   Our Notice and GNU Lesser General Public License.
-  
-  This program is free software; you can redistribute it and/or 
-  modify it under the terms of the GNU General Public License 
-  (as published by the Free Software Foundation) version 2.1 
+
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License
+  (as published by the Free Software Foundation) version 2.1
   dated February 1999.
-  
-  This program is distributed in the hope that it will be useful, 
-  but WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY 
-  OF MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-  terms and conditions of the GNU General Public License for more 
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY
+  OF MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  terms and conditions of the GNU General Public License for more
   details.
-  
-  You should have received a copy of the GNU Lesser General Public 
-  License along with this program; if not, write to the 
-  
-  Free Software Foundation, Inc., 
-  59 Temple Place, Suite 330, 
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this program; if not, write to the
+
+  Free Software Foundation, Inc.,
+  59 Temple Place, Suite 330,
   Boston, MA 02111-1307 USA
 */
 
@@ -105,12 +105,13 @@ typedef struct module_arg_d
 typedef struct module_def_d *module_def_p;
 typedef struct module_def_d
 {
-  char name[PNMPI_MODULE_FILENAMELEN];
+  module_name_t name;
+  module_name_t path;
   char username[PNMPI_MODULE_USERNAMELEN];
   int registered;
   void *handle;
   module_arg_p args;
-  int pcontrol;	
+  int pcontrol;
   module_servlist_p services;
   module_globlist_p globals;
   int stack_delimiter;
@@ -144,7 +145,7 @@ extern pthread_mutex_t pnmpi_level_lock;
 #endif /*PNMPI_ENABLE_THREAD_SAFETY*/
 /* jfm Modification (ELP AP THREAD SAFETY) END */
 
-void pnmpi_PreInit(void);  
+void pnmpi_PreInit(void);
 
 extern int iargc_(void);
 extern char *getarg_(int*,char*,int);
@@ -165,7 +166,7 @@ extern pnmpi_functions_t pnmpi_function_ptrs;
 // TODO: Does all the initialization really need to live in macros?  Does it need to happen
 // TODO: that fast?  It's only done once.
 #ifdef DBGLEVEL5
-#define MODULE_STATS_5(mods, fn) if (DBGCHECK(DBGLEVEL5)) mods.module[__i]->statscount.fn=0;
+#define MODULE_STATS_5(mods, fn) if (DBGCHECK(DBGLEVEL5)) mods.module[i]->statscount.fn=0;
 #define TOTAL_STATS_5(fn)        if (DBGCHECK(DBGLEVEL5)) pnmpi_totalstats_count.fn=0;
 #else
 #define MODULE_STATS_5(mods, fn)
@@ -173,7 +174,7 @@ extern pnmpi_functions_t pnmpi_function_ptrs;
 #endif
 
 #ifdef DBGLEVEL6
-#define MODULE_STATS_6(mods, fn) if (DBGCHECK(DBGLEVEL6)) mods.module[__i]->statstiming.fn=0;
+#define MODULE_STATS_6(mods, fn) if (DBGCHECK(DBGLEVEL6)) mods.module[i]->statstiming.fn=0;
 #define TOTAL_STATS_6(fn)        if (DBGCHECK(DBGLEVEL6)) pnmpi_totalstats_timing.fn=0;
 #else
 #define MODULE_STATS_6(mods, fn)
@@ -211,7 +212,7 @@ int PMPI_Finalized( int * );
 
 // actual stack initialization macro
 #define INITIALIZE_FUNCTION_STACK(routine, routine_id, r_type, stack, mods, mpiroutine) {       \
-    int __i;                                                                                    \
+    int i;                                                                                      \
     DBGPRINT2("Initialize stack for %s\n",routine);                                             \
     if (pnmpi_function_ptrs.stack == NULL) {                                                    \
       pnmpi_function_ptrs.stack = (r_type*)malloc(mods.num * sizeof(r_type));                   \
@@ -220,20 +221,17 @@ int PMPI_Finalized( int * );
       WARNPRINT("Can't allocate stack for (%i) - exiting", routine_id);                         \
       exit(1);                                                                                  \
     }                                                                                           \
-    for (__i=0; __i<mods.num; __i++) {                                                          \
-      if (mods.module[__i]->stack_delimiter) continue;                                          \
-      pnmpi_function_ptrs.stack[__i]=(r_type) mydlsym(mods.module[__i]->handle,routine);        \
-      RTLDNEXT_RETRIEVAL(r_type, routine) \
-      if (pnmpi_function_ptrs.stack[__i] != NULL                                                \
-            && pnmpi_function_ptrs.stack[__i] != (r_type) P ## mpiroutine                       \
-            && RTLDNEXT_CHECK(stack)) {                                                         \
+    for (i=0; i<mods.num; i++) {                                                                \
+      if (mods.module[i]->stack_delimiter) continue;                                            \
+      pnmpi_function_ptrs.stack[i]=(r_type) find_symbol(mods.module[i], routine);               \
+      if (pnmpi_function_ptrs.stack[i] != NULL) {                                               \
         SET_ACTIVATED(routine_id);                                                              \
       } \
       else { \
-          pnmpi_function_ptrs.stack[__i] = NULL; /*needed to make RTLD_NEXT check work*/ \
+          pnmpi_function_ptrs.stack[i] = NULL; /*needed to make RTLD_NEXT check work*/ \
       }\
       DBGPRINT2("Symbol for routine %s in module %s: value %px",                                \
-                routine, mods.module[__i]->name, pnmpi_function_ptrs.stack[__i]);               \
+                routine, mods.module[i]->name, pnmpi_function_ptrs.stack[i]);                   \
       MODULE_STATS_5(mods, mpiroutine);                                                         \
       MODULE_STATS_6(mods, mpiroutine);                                                         \
     }                                                                                           \

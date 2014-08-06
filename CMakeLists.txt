@@ -71,7 +71,7 @@ set(MPI_CXX_SKIP_FLAGS
 
 # Fortran name mangling option, customizable at cmd line
 # TODO: detect fortran name mangling, e.g.: F77SYMBOL = symbol_
-set(F77SYMBOL symbol_ CACHE STRING "Name demangling scheme.") 
+set(F77SYMBOL symbol_ CACHE STRING "Name demangling scheme.")
 
 # BFD is used by the patch utility.
 find_package(BFD)
@@ -79,9 +79,9 @@ find_package(BFD)
 #Run feature tests
 INCLUDE (FeatureTests)
 
-#===================================	
-# Ennable PnMPI internal debugging 
-#===================================	
+#===================================
+# Ennable PnMPI internal debugging
+#===================================
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   add_definitions(-DDBGLEVEL=0)
 endif()
